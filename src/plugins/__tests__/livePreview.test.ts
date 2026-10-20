@@ -26,6 +26,22 @@ function createTestView(doc: string, cursorPos?: number) {
   return new EditorView({ state, parent: container });
 }
 
+/**
+ * Collect all livePreview decorations as plain objects
+ */
+function collectDecorations(view: EditorView) {
+  const result: { from: number; to: number; class?: string; widget: boolean }[] = [];
+  view.plugin(livePreviewPlugin)?.decorations.between(
+    0,
+    view.state.doc.length,
+    (from, to, deco) => {
+      const spec = deco.spec as { class?: string; widget?: unknown };
+      result.push({ from, to, class: spec.class, widget: !!spec.widget });
+    }
+  );
+  return result;
+}
+
 describe('livePreviewPlugin', () => {
   describe('plugin initialization', () => {
     it('should create decorations on initialization', () => {
@@ -91,11 +107,32 @@ describe('livePreviewPlugin', () => {
       view.destroy();
     });
 
-    it('should detect ListMark (-)', () => {
-      const view = createTestView('- list item');
-      const plugin = view.plugin(livePreviewPlugin);
+    it('should keep - list marker visible with muted class', () => {
+      const view = createTestView('- list item\n\ntext', 15);
 
-      expect(plugin?.decorations.size).toBeGreaterThan(0);
+      expect(collectDecorations(view)).toEqual([
+        { from: 0, to: 1, class: 'cm-list-mark', widget: false },
+      ]);
+
+      view.destroy();
+    });
+
+    it('should replace * list marker with bullet when line is inactive', () => {
+      const view = createTestView('* list item\n\ntext', 15);
+
+      expect(collectDecorations(view)).toEqual([
+        { from: 0, to: 1, class: undefined, widget: true },
+      ]);
+
+      view.destroy();
+    });
+
+    it('should show raw * with muted class when cursor is on that line', () => {
+      const view = createTestView('* list item', 3);
+
+      expect(collectDecorations(view)).toEqual([
+        { from: 0, to: 1, class: 'cm-list-mark', widget: false },
+      ]);
 
       view.destroy();
     });
@@ -118,16 +155,12 @@ describe('livePreviewPlugin', () => {
 
       // Check if decorations contain visible class
       let hasInlineClass = false;
-      plugin?.decorations.between(
-        0,
-        view.state.doc.length,
-        (_from, _to, deco) => {
-          const spec = deco.spec as { class?: string };
-          if (spec.class?.includes('cm-formatting-inline')) {
-            hasInlineClass = true;
-          }
+      plugin?.decorations.between(0, view.state.doc.length, (_from, _to, deco) => {
+        const spec = deco.spec as { class?: string };
+        if (spec.class?.includes('cm-formatting-inline')) {
+          hasInlineClass = true;
         }
-      );
+      });
 
       // Plugin should detect inline marks
       expect(hasInlineClass).toBe(true);
@@ -230,16 +263,12 @@ describe('livePreviewPlugin', () => {
 
       // Should have block mark decorations
       let blockCount = 0;
-      plugin?.decorations.between(
-        0,
-        view.state.doc.length,
-        (_from, _to, deco) => {
-          const spec = deco.spec as { class?: string };
-          if (spec.class?.includes('cm-formatting-block')) {
-            blockCount++;
-          }
+      plugin?.decorations.between(0, view.state.doc.length, (_from, _to, deco) => {
+        const spec = deco.spec as { class?: string };
+        if (spec.class?.includes('cm-formatting-block')) {
+          blockCount++;
         }
-      );
+      });
 
       // Three headings should have three HeaderMarks
       expect(blockCount).toBe(3);

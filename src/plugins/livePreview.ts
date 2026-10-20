@@ -1,21 +1,22 @@
 import { syntaxTree } from '@codemirror/language';
 import { Range } from '@codemirror/state';
-import {
-  Decoration,
-  DecorationSet,
-  EditorView,
-  ViewPlugin,
-  ViewUpdate,
-} from '@codemirror/view';
+import { Decoration, DecorationSet, EditorView, ViewPlugin, ViewUpdate } from '@codemirror/view';
 import { shouldShowSource } from '../core/shouldShowSource';
 import { mouseSelectingField } from '../core/mouseSelecting';
 import { checkUpdateAction } from '../core/pluginUpdateHelper';
+import { bulletDecoration } from '../widgets/bulletWidget';
 
 /**
  * Parent node types to skip
  * Marks inside these nodes should not be processed
  */
 const SKIP_PARENT_TYPES = new Set(['FencedCode', 'CodeBlock']);
+
+/**
+ * Mark decoration for list markers (-, +, 1., and raw * on the active line)
+ * applies muted styling via `cm-list-mark`
+ */
+const listMarkDecoration = Decoration.mark({ class: 'cm-list-mark' });
 
 /**
  * Check if node is inside a skipped parent
@@ -83,14 +84,30 @@ export const livePreviewPlugin = ViewPlugin.fromClass(
             'StrikethroughMark', // ~~
             'CodeMark', // `
             'HeaderMark', // #
-            'ListMark', // - or *
+            'ListMark', // - + * 1. (* is rendered as a bullet)
             'QuoteMark', // >
           ];
 
-          if (!markTypes.includes(node.name)) return;
+          if (!markTypes.includes(node.name)) {
+            return;
+          }
 
           // Skip marks inside code blocks
           if (isInsideSkippedParent(node)) {
+            return;
+          }
+
+          const isActiveLine = activeLines.has(state.doc.lineAt(node.from).number);
+          const showSource = isActiveLine && !isDrag;
+
+          // List markers: only * becomes a bullet
+          if (node.name === 'ListMark') {
+            const isStar = state.doc.sliceString(node.from, node.to) === '*';
+            if (isStar && !showSource) {
+              decorations.push(bulletDecoration.range(node.from, node.to));
+            } else {
+              decorations.push(listMarkDecoration.range(node.from, node.to));
+            }
             return;
           }
 
@@ -106,21 +123,22 @@ export const livePreviewPlugin = ViewPlugin.fromClass(
             }
           }
 
-          const isBlock = ['HeaderMark', 'ListMark', 'QuoteMark'].includes(
-            node.name
-          );
-          const lineNum = state.doc.lineAt(node.from).number;
-          const isActiveLine = activeLines.has(lineNum);
+          const isBlock = ['HeaderMark', 'QuoteMark'].includes(node.name);
 
           if (isBlock) {
+            // Include the space after a leading `#` mark so it is hidden too
+            let to = node.to;
+            if (
+              node.name === 'HeaderMark' &&
+              node.node.parent?.from === node.from &&
+              state.doc.sliceString(to, to + 1) === ' '
+            ) { ++to; }
+
             // Block marks: use fontSize animation
-            const cls =
-              isActiveLine && !isDrag
-                ? 'cm-formatting-block cm-formatting-block-visible'
-                : 'cm-formatting-block';
-            decorations.push(
-              Decoration.mark({ class: cls }).range(node.from, node.to)
-            );
+            const cls = showSource
+              ? 'cm-formatting-block cm-formatting-block-visible'
+              : 'cm-formatting-block';
+            decorations.push(Decoration.mark({ class: cls }).range(node.from, to));
           } else {
             // Inline marks: use max-width animation
             if (node.from >= node.to) return;
@@ -131,9 +149,7 @@ export const livePreviewPlugin = ViewPlugin.fromClass(
                 ? 'cm-formatting-inline cm-formatting-inline-visible'
                 : 'cm-formatting-inline';
 
-            decorations.push(
-              Decoration.mark({ class: cls }).range(node.from, node.to)
-            );
+            decorations.push(Decoration.mark({ class: cls }).range(node.from, node.to));
           }
         },
       });

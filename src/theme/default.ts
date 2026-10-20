@@ -109,6 +109,16 @@ export const editorTheme = EditorView.theme({
     color: 'hsl(var(--md-heading, var(--foreground, 220 9% 9%)))',
   },
 
+  // ========== List Styles ==========
+  '.cm-list-bullet': {
+    fontSize: '1.3em',
+    lineHeight: '1',
+  },
+
+  '.cm-list-mark': {
+    color: 'hsl(var(--muted-foreground, 220 9% 46%))',
+  },
+
   // ========== Inline Styles ==========
   '.cm-strong': {
     fontWeight: '700',
