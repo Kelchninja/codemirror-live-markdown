@@ -1,15 +1,53 @@
 # codemirror-live-markdown
 
-[![npm version](https://img.shields.io/npm/v/codemirror-live-markdown.svg)](https://www.npmjs.com/package/codemirror-live-markdown)
-[![npm downloads](https://img.shields.io/npm/dm/codemirror-live-markdown.svg)](https://www.npmjs.com/package/codemirror-live-markdown)
-[![CI](https://github.com/blueberrycongee/codemirror-live-markdown/actions/workflows/ci.yml/badge.svg)](https://github.com/blueberrycongee/codemirror-live-markdown/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **Obsidian-style Live Preview for CodeMirror 6** — A modular plugin collection that hides Markdown syntax when you're not editing it.
 
 English | [简体中文](./README.zh-CN.md)
 
-[Live Demo](https://codemirror-live-markdown.vercel.app/) · [Documentation](#documentation) · [Roadmap](./ROADMAP.md)
+[Live Demo (original, without fork changes)](https://codemirror-live-markdown.vercel.app/) · [Documentation](#documentation) · [Roadmap](./ROADMAP.md)
+
+---
+
+> [!NOTE]
+> **This is a fork** of [blueberrycongee/codemirror-live-markdown](https://github.com/blueberrycongee/codemirror-live-markdown).
+> It is not published to npm; install it from GitHub (see [Installation](#installation)).
+> The live demo above is the original project's and does not include the fork's changes.
+> See [Differences from the original](#differences-from-the-original) for what this fork changes.
+
+## Differences from the original
+
+This fork changes how list and heading markers behave in live preview. Everything else matches upstream.
+
+| Behavior | Original | This fork |
+|----------|----------|-----------|
+| List markers `-`, `+`, `1.` off the cursor line | Hidden | **Stay visible**, shown in a muted color (`.cm-list-mark`) |
+| List marker `*` off the cursor line | Hidden | **Rendered as a bullet `•`** (`.cm-list-bullet`) |
+| List markers on the cursor line | Shown as raw source | Shown as raw source (unchanged) |
+| Space after a heading `#` | Stays visible, so the heading text is indented | **Hidden with the `#`**, so the heading text starts flush left |
+
+In short, lists keep their structure in the preview: you can always tell bulleted, `+` and numbered lists apart, and `*` lists look like real bullet lists.
+
+**Styling hooks** added by the fork (both defined in `editorTheme`, both overridable):
+
+```css
+.cm-list-mark   { color: hsl(var(--muted-foreground, 220 9% 46%)); } /* -, +, 1. and raw * */
+.cm-list-bullet { font-size: 1.3em; line-height: 1; }               /* rendered • for * */
+```
+
+**What changed in the code** (all in commit `035a0d0`):
+
+| File | Change |
+|------|--------|
+| `src/plugins/livePreview.ts` | `ListMark` is no longer hidden like other block marks: `*` off the cursor line is replaced with a bullet widget, every other list marker gets the `cm-list-mark` class. A leading `HeaderMark` now also hides the single space after it. |
+| `src/widgets/bulletWidget.ts` | **New.** `BulletWidget` / `bulletDecoration`, a replace decoration that renders `•` in place of `*`. |
+| `src/theme/default.ts` | Adds the `.cm-list-mark` and `.cm-list-bullet` styles. |
+| `src/plugins/__tests__/livePreview.test.ts` | Adds a `collectDecorations()` helper and replaces the old `ListMark` test with three tests: `-` stays visible with the muted class, `*` becomes a bullet off the cursor line, `*` stays raw on the cursor line. |
+
+Some lines in `livePreview.ts` and the tests were also reformatted (collapsed imports and calls); that does not change behavior. There is no test yet for the hidden space after `#`.
+
+The API is identical to the original, so no code changes are needed when switching.
 
 ---
 
@@ -38,9 +76,15 @@ Most Markdown editors force you to choose: either see raw syntax or rendered out
 
 ## Installation
 
+This fork is installed from GitHub; the `prepare` script builds the package on install:
+
 ```bash
-npm install codemirror-live-markdown
+npm install github:Kelchninja/codemirror-live-markdown#feat/list-markers
 ```
+
+To pin an exact version, use a commit hash or tag instead of the branch name (for example `#035a0d0`).
+
+> `npm install codemirror-live-markdown` installs the **original** package without the fork's changes.
 
 **Peer dependencies:**
 ```bash
@@ -221,7 +265,7 @@ Customize with CSS variables:
 ## Development
 
 ```bash
-git clone https://github.com/blueberrycongee/codemirror-live-markdown.git
+git clone https://github.com/Kelchninja/codemirror-live-markdown.git
 cd codemirror-live-markdown
 npm install
 npm run dev      # Watch mode
@@ -248,7 +292,7 @@ Contributions are welcome! Please read our contributing guidelines before submit
 
 ## License
 
-[MIT](./LICENSE) © [blueberrycongee](https://github.com/blueberrycongee)
+[MIT](./LICENSE) © [blueberrycongee](https://github.com/blueberrycongee) (original project) · fork changes © [Kelchninja](https://github.com/Kelchninja)
 
 ## Acknowledgments
 

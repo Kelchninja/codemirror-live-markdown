@@ -1,17 +1,19 @@
 # codemirror-live-markdown
 
-[![npm version](https://img.shields.io/npm/v/codemirror-live-markdown.svg)](https://www.npmjs.com/package/codemirror-live-markdown)
-[![npm downloads](https://img.shields.io/npm/dm/codemirror-live-markdown.svg)](https://www.npmjs.com/package/codemirror-live-markdown)
-[![CI](https://github.com/blueberrycongee/codemirror-live-markdown/actions/workflows/ci.yml/badge.svg)](https://github.com/blueberrycongee/codemirror-live-markdown/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 **CodeMirror 6 的 Obsidian 风格实时预览** — 模块化插件集合，在非编辑状态下隐藏 Markdown 语法。
 
 [English](./README.md) | 简体中文
 
-[在线演示](https://codemirror-live-markdown.vercel.app/) · [文档](#文档) · [路线图](./ROADMAP.md)
+[在线演示（原项目，不含本分支的修改）](https://codemirror-live-markdown.vercel.app/) · [文档](#文档) · [路线图](./ROADMAP.md)
 
 ---
+
+> [!NOTE]
+> **这是 [blueberrycongee/codemirror-live-markdown](https://github.com/blueberrycongee/codemirror-live-markdown) 的一个分支（fork）**，未发布到 npm。
+> 本中文文档未包含分支的修改说明；与原项目的区别（列表标记保持可见、`*` 显示为圆点、标题 `#` 后的空格一并隐藏）及安装方式请参阅
+> [英文 README](./README.md#differences-from-the-original)。
 
 ## 为什么选择这个库？
 
